@@ -44,6 +44,10 @@ its yields at some settlement date), and the app then opens the results for that
 
 ---
 
+**Deploying the app for other people:** see `DEPLOY.md` (Streamlit Community Cloud; shared deployments keep each visitor's uploads private).
+
+---
+
 ## 1. Results
 
 Two curves are built from the same inputs: FBIL's flagged input bonds (26 to 30 per date, FRBs
@@ -185,6 +189,7 @@ as FBIL's SDL methodology anticipates.
 
 ```
 README.md                               this file
+DEPLOY.md                               how to deploy the app on Streamlit Community Cloud
 ZCYC_MiniProject_Presentation.pptx      presentation
 code/app.py                             end-to-end entry point (all steps, or one date + HTML report)
 code/streamlit_app.py                   interactive Streamlit app

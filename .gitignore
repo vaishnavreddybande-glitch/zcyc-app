@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+input_data/uploaded/
+additional_material/outputs/app/
+.DS_Store

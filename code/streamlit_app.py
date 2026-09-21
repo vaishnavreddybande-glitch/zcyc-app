@@ -8,6 +8,8 @@ Same methodology as the submitted scripts (src/engine.py); the logic lives in sr
 """
 import os
 import sys
+import tempfile
+import uuid
 import warnings
 from datetime import date
 
@@ -20,6 +22,13 @@ warnings.filterwarnings("ignore")
 import appcore as ac  # noqa: E402
 
 st.set_page_config(page_title="G-Sec zero coupon yield curve", layout="wide")
+
+# Shared deployment: every visitor's uploads are private to that browser session, kept in a temporary folder and purged after a few hours.
+MULTI_USER = ac.multiuser(__file__)
+if MULTI_USER:
+    ac.set_upload_dir(os.path.join(tempfile.gettempdir(), "zcyc_uploads"))
+    st.session_state.setdefault("sid", uuid.uuid4().hex[:10])
+SID = st.session_state.get("sid") if MULTI_USER else None
 
 LAM0, SLOPE0 = ac.tuned_params()
 st.session_state.setdefault("lam", LAM0)
@@ -64,12 +73,12 @@ def build_date():
             raise ValueError("Enter the date as YYYY-MM-DD, for example 2026-09-18.")
         zc, sd = ss.get("up_zcyc"), ss.get("up_sdl")
         info = ac.save_upload(iso, gb, ac.parse_tbills(ss.get("tb_text", "")),
-                              zc.getvalue() if zc is not None else None, sd.getvalue() if sd is not None else None)
+                              zc.getvalue() if zc is not None else None, sd.getvalue() if sd is not None else None, sid=SID)
         parts = [f"{info['n_inputs']} input bonds", f"settlement {info['settle']}",
                  "FBIL comparison included" if info["has_fbil"] else "no FBIL curve loaded, so no comparison",
                  "SDL STRIPS available" if info["has_sdl"] else "G-Sec STRIPS only"]
         ss["flash"] = f"Built the curve for {iso}: " + ", ".join(parts) + "."
-        ss["iso_sel"] = iso
+        ss["iso_sel"] = info["key"]
         ss["data_mode"] = VIEW
     except ValueError as e:
         ss["form_error"] = str(e)
@@ -114,18 +123,20 @@ if st.session_state["data_mode"] == ENTER:
     st.text_input("Valuation date, only if it could not be read from the file (YYYY-MM-DD)", key="date_override")
     st.button("Build curve", on_click=build_date, type="primary")
     st.caption("Files are checked before anything is stored: date match across files, enough input bonds, and that FBIL's prices "
-               "reproduce from its yields at some settlement date. Entered dates are saved in input_data/uploaded/.")
+               "reproduce from its yields at some settlement date. "
+               + ("Your files are private to this browser session and are deleted after a few hours; only upload data you are allowed to share."
+                  if MULTI_USER else "Entered dates are saved in input_data/uploaded/."))
     st.stop()
 
 # ------------------------------------------------------------------ results for a loaded date
-dates = ac.list_dates()
+dates = ac.list_dates(SID)
 if not dates:
     st.error("No FBIL data found in input_data/. Run the app from the project's code/ folder.")
     st.stop()
 if st.session_state.get("iso_sel") not in dates:
     st.session_state["iso_sel"] = dates[-1]
 role = lambda d_: "held out" if d_ == ac.HELD_OUT else ("tuning date" if d_ in ac.md.DATES else "entered by you")
-iso = sb.selectbox("Valuation date", dates, key="iso_sel", format_func=lambda d_: f"{d_}  ({role(d_)})")
+iso = sb.selectbox("Valuation date", dates, key="iso_sel", format_func=lambda d_: f"{ac.base(d_)}  ({role(d_)})")
 if ac.is_uploaded(iso):
     sb.button("Remove this entered date", on_click=remove_date)
 choice = sb.radio("Curves to show", ["Both", "Smoothed fit", "Exact fit"])
@@ -159,7 +170,7 @@ st.title("Zero coupon yield curve for Indian G-Secs")
 d = ac.load_inputs(iso)
 n_t = int((d.inp["input_status"] == "T").sum())
 n_p = int((d.inp["input_status"] == "Proxy").sum())
-st.caption(f"Valuation date {iso} · settlement {d.settle} (detected from FBIL's prices) · {len(d.inp)} FBIL input bonds "
+st.caption(f"Valuation date {ac.base(iso)} · settlement {d.settle} (detected from FBIL's prices) · {len(d.inp)} FBIL input bonds "
            f"({n_t} traded, {n_p} FBIL proxy yields) · T-bill inputs: 7-day, {'3M, ' if use_3m else ''}6M, 12M")
 if not d.has_fbil:
     st.info("FBIL's ZCYC file is not loaded for this date, so there is no comparison with FBIL's zero curve. "
@@ -175,7 +186,7 @@ for k in keys:
     try:
         curves[k], infos[k] = ac.fit_curve(iso, k, lam, slope, use_3m)
     except Exception as e:
-        st.error(f"{ac.METHODS[k][0]} could not be fitted for {iso}: {e}")
+        st.error(f"{ac.METHODS[k][0]} could not be fitted for {ac.base(iso)}: {e}")
 if not curves:
     st.stop()
 if "exact" in infos and not infos["exact"]["converged"]:
@@ -247,7 +258,7 @@ with t_seg:
 
 # ------------------------------------------------------------------ all dates
 with t_dates:
-    at = ac.all_dates_table(lam, slope, use_3m)
+    at = ac.all_dates_table(lam, slope, use_3m, SID)
     if at.empty:
         st.info("No date with FBIL's ZCYC file is loaded.")
     else:
@@ -309,7 +320,7 @@ with t_strips:
             out = stp[["strip_name", "strip_type", "date", "t_years", "cash_flow", "zero_pct", "discount_factor", "pv_unnormalised",
                        "normalised_value", "price_per_100_face", "implied_yield_semi_pct"]]
             st.dataframe(out.round(5), hide_index=True)
-            st.download_button("Download STRIPS table (CSV)", data=csv_bytes(out), file_name=f"strips_{isin}_{iso}.csv", mime="text/csv")
+            st.download_button("Download STRIPS table (CSV)", data=csv_bytes(out), file_name=f"strips_{isin}_{ac.base(iso)}.csv", mime="text/csv")
     except Exception as e:
         st.error(f"Could not price STRIPS: {e}")
 
@@ -318,6 +329,6 @@ with t_down:
     st.markdown("Full curve tables: zero (semi-annual and annualised), par yield and discount factor"
                 + (", with FBIL's values and the gaps." if d.has_fbil else "."))
     for k, tab in tabs.items():
-        st.download_button(f"Download {ac.METHODS[k][0].lower()} curve for {iso} (CSV)", data=csv_bytes(tab.round(6)),
-                           file_name=f"zcyc_{iso}_{k}.csv", mime="text/csv", key=f"dl_{k}")
+        st.download_button(f"Download {ac.METHODS[k][0].lower()} curve for {ac.base(iso)} (CSV)", data=csv_bytes(tab.round(6)),
+                           file_name=f"zcyc_{ac.base(iso)}_{k}.csv", mime="text/csv", key=f"dl_{k}")
         st.dataframe(tab.round(4), hide_index=True)

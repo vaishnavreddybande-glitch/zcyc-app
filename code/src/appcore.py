@@ -28,6 +28,41 @@ ROOT = md.ROOT
 MULTI = md.MULTI
 UPLOADED = md.UPLOADED
 REQUIRED_TBILLS = ["7 Days", "3 Months", "6 Months", "12 Months"]
+
+
+def base(iso):
+    """The calendar date of a date key. Dates entered by a visitor of a shared deployment are stored as 'YYYY-MM-DD~<session id>'."""
+    return iso.split("~")[0]
+
+
+def multiuser(path=None):
+    """True when the app serves several visitors at once (Streamlit Community Cloud, or ZCYC_MULTIUSER=1), so that every visitor's
+    uploads must stay private. On a laptop it is False and entered dates persist in input_data/uploaded/."""
+    v = os.environ.get("ZCYC_MULTIUSER")
+    if v is not None:
+        return v.strip().lower() in ("1", "true", "yes")
+    return os.path.abspath(path or __file__).replace("\\", "/").startswith("/mount/src")
+
+
+def set_upload_dir(path):
+    """Where entered dates are stored (a temporary folder on a shared deployment)."""
+    global UPLOADED
+    UPLOADED = path
+    md.UPLOADED = path
+
+
+def purge_old_uploads(hours=6):
+    """Delete entered files older than `hours` (shared deployments only)."""
+    import time
+    if not os.path.isdir(UPLOADED):
+        return
+    cutoff = time.time() - hours * 3600
+    for f in glob.glob(os.path.join(UPLOADED, "*")):
+        try:
+            if os.path.getmtime(f) < cutoff:
+                os.remove(f)
+        except OSError:
+            pass
 OUT = os.path.join(ROOT, "additional_material", "outputs")
 HELD_OUT = "2026-09-11"          # the only date not used to choose the smoothing settings
 NAVY, ORANGE, TEAL, GREY, RED = "#1F3A5F", "#E07B39", "#2A9D8F", "#8A8F98", "#C0392B"
@@ -54,9 +89,14 @@ def _dates_in(folder):
     return out
 
 
-def list_dates():
-    """Dates with a G-Sec valuation file and T-bill rates, from the study folder or the folder for entered dates."""
-    return sorted(_dates_in(MULTI) | _dates_in(UPLOADED))
+def list_dates(sid=None):
+    """Dates with a G-Sec valuation file and T-bill rates: the study dates plus the dates entered through the app.
+    On a shared deployment (sid given) only this visitor's entries are listed; on a laptop (sid None) all entries are."""
+    out = set(_dates_in(MULTI))
+    for iso in _dates_in(UPLOADED):
+        if (sid is None and "~" not in iso) or (sid is not None and iso.endswith("~" + sid)):
+            out.add(iso)
+    return sorted(out, key=lambda k: (base(k), k))
 
 
 def is_uploaded(iso):
@@ -173,14 +213,14 @@ def bond_table(iso, curves):
                              "ytm": "FBIL YTM %", "input_status": "Traded / proxy", "years": "Years"})
 
 
-def all_dates_table(lam, slope, use_3m):
+def all_dates_table(lam, slope, use_3m, sid=None):
     """Comparison with FBIL on every date whose FBIL zero curve is available."""
     rows = []
-    for iso in list_dates():
+    for iso in list_dates(sid):
         d = load_inputs(iso)
         if not d.has_fbil:
             continue
-        r = {"Date": iso, "Role": "held out" if iso == HELD_OUT else ("tuning" if iso in md.DATES else "uploaded"),
+        r = {"Date": base(iso), "Role": "held out" if iso == HELD_OUT else ("tuning" if iso in md.DATES else "uploaded"),
              "Input bonds": len(d.inp)}
         for key in ("exact", "smooth"):
             sm = summary(curve_table(iso, fit_curve(iso, key, lam, slope, use_3m)[0]))
@@ -368,11 +408,14 @@ def parse_tbills(text):
     return out
 
 
-def save_upload(iso, gsec_bytes, tbill_rates, zcyc_bytes=None, sdl_bytes=None):
+def save_upload(iso, gsec_bytes, tbill_rates, zcyc_bytes=None, sdl_bytes=None, sid=None):
     """Store one new FBIL date under input_data/uploaded/ using the project's file names and check that it works.
     Required: the G-Sec valuation file and the T-bill rates. Optional: the ZCYC and STRIPS file (adds the comparison with
     FBIL) and the SDL valuation file (adds SDL STRIPS). Raises ValueError, and removes the files again, if anything is wrong."""
     date.fromisoformat(iso)
+    real_iso, key = iso, (f"{iso}~{sid}" if sid else iso)      # the key names the files and separates visitors
+    if sid:
+        purge_old_uploads()
     converted = []
     for name, data in (("G-Sec valuation", gsec_bytes), ("ZCYC and STRIPS", zcyc_bytes), ("SDL valuation", sdl_bytes)):
         try:
@@ -383,18 +426,18 @@ def save_upload(iso, gsec_bytes, tbill_rates, zcyc_bytes=None, sdl_bytes=None):
     missing = [t for t in REQUIRED_TBILLS if t not in tbill_rates]
     if missing:
         raise ValueError("T-bill rates missing for: " + ", ".join(missing) + ". Paste FBIL's T-bill table or type lines like '7 Days 4.72'.")
-    if iso in _dates_in(MULTI):
-        raise ValueError(f"{iso} is part of the study data and cannot be replaced.")
+    if real_iso in _dates_in(MULTI):
+        raise ValueError(f"{real_iso} is part of the study data and cannot be replaced.")
     for name, data in (("G-Sec valuation", gsec_bytes), ("ZCYC and STRIPS", zcyc_bytes), ("SDL valuation", sdl_bytes)):
         if data:
             fd = file_date(data)
-            if fd is not None and fd.isoformat() != iso:
-                raise ValueError(f"The {name} file is dated {fd}, not {iso}. All files must be for the same date.")
-    files = {f"gsec_valuation_{iso}.xlsx": gsec_bytes}
+            if fd is not None and fd.isoformat() != real_iso:
+                raise ValueError(f"The {name} file is dated {fd}, not {real_iso}. All files must be for the same date.")
+    files = {f"gsec_valuation_{key}.xlsx": gsec_bytes}
     if zcyc_bytes:
-        files[f"gsec_zcyc_and_strips_{iso}.xlsx"] = zcyc_bytes
+        files[f"gsec_zcyc_and_strips_{key}.xlsx"] = zcyc_bytes
     if sdl_bytes:
-        files[f"sdl_valuation_{iso}.xlsx"] = sdl_bytes
+        files[f"sdl_valuation_{key}.xlsx"] = sdl_bytes
     os.makedirs(UPLOADED, exist_ok=True)
     written = []
     try:
@@ -403,11 +446,11 @@ def save_upload(iso, gsec_bytes, tbill_rates, zcyc_bytes=None, sdl_bytes=None):
                 fh.write(data)
             written.append(name)
         pd.DataFrame({"tenor": list(tbill_rates), "rate_pct": [float(v) for v in tbill_rates.values()]}) \
-            .to_csv(os.path.join(UPLOADED, f"tbill_{iso}.csv"), index=False)
-        written.append(f"tbill_{iso}.csv")
+            .to_csv(os.path.join(UPLOADED, f"tbill_{key}.csv"), index=False)
+        written.append(f"tbill_{key}.csv")
         clear_caches()
         try:
-            d = load_inputs(iso)
+            d = load_inputs(key)
         except ValueError as e:
             if "zero-size" in str(e):
                 raise ValueError("no bond in the G-Sec file is still outstanding on that date; check that the date matches the file") from e
@@ -423,9 +466,9 @@ def save_upload(iso, gsec_bytes, tbill_rates, zcyc_bytes=None, sdl_bytes=None):
         if zcyc_bytes and d.zcyc is None:
             raise ValueError("the ZCYC and STRIPS file could not be read (expected a sheet named 'ZCYC')")
         if sdl_bytes:
-            load_sdl(sdl_path(iso))
+            load_sdl(sdl_path(key))
         for m in ("exact", "smooth"):
-            fit_curve(iso, m, *tuned_params(), True)
+            fit_curve(key, m, *tuned_params(), True)
     except Exception as e:
         for name in written:
             try:
@@ -436,7 +479,7 @@ def save_upload(iso, gsec_bytes, tbill_rates, zcyc_bytes=None, sdl_bytes=None):
         if isinstance(e, ValueError):
             raise ValueError(f"Could not use these files: {e}") from e
         raise ValueError(f"Could not use these files: {e}") from e
-    return {"settle": d.settle, "n_inputs": len(d.inp), "has_fbil": d.has_fbil, "has_sdl": bool(sdl_bytes)}
+    return {"key": key, "settle": d.settle, "n_inputs": len(d.inp), "has_fbil": d.has_fbil, "has_sdl": bool(sdl_bytes)}
 
 
 def delete_uploaded(iso):
@@ -475,7 +518,7 @@ def fig_zero(iso, curves, show_bonds=True, xmax=50):
     if show_bonds:
         top.scatter([md.yearfrac(m, d.settle) for m in d.inp["maturity"]], d.inp["ytm"], s=20, color=TEAL, zorder=5, label="Input bond YTMs")
     top.set_ylabel("Semi-annual zero rate (%)"); top.legend(frameon=False, loc="lower right", fontsize=9)
-    top.set_title(f"Zero curve, {iso}", loc="left", fontsize=11)
+    top.set_title(f"Zero curve, {base(iso)}", loc="left", fontsize=11)
     if two:
         ax[1].axhspan(-0.5, 0.5, color=GREY, alpha=0.2); ax[1].axhline(0, color=GREY, lw=0.8); ax[1].axvline(14, color=NAVY, lw=0.8, ls="--")
         lo, hi = min(x.min() for x in gaps), max(x.max() for x in gaps)
@@ -508,7 +551,7 @@ def fig_par(iso, curves):
             gaps.append((p - fb) * 100)
             ax[1].plot(g, gaps[-1], color=col, lw=1.6)
     top.set_ylabel("Par yield, semi-annual (%)"); top.legend(frameon=False, loc="lower right", fontsize=9)
-    top.set_title(f"Par yield curve, {iso}", loc="left", fontsize=11)
+    top.set_title(f"Par yield curve, {base(iso)}", loc="left", fontsize=11)
     if two:
         ax[1].axhspan(-0.5, 0.5, color=GREY, alpha=0.2); ax[1].axhline(0, color=GREY, lw=0.8)
         lo, hi = min(x.min() for x in gaps), max(x.max() for x in gaps)

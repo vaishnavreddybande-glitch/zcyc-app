@@ -103,7 +103,7 @@ def load_tbills(iso):
 # ------------------------------------------------------------------ settlement date, detected not assumed
 def detect_settlement(iso, max_ahead=6):
     """Pick the settlement date that best reproduces FBIL's published clean prices from its YTMs."""
-    val = date.fromisoformat(iso)
+    val = date.fromisoformat(iso.split("~")[0])      # "2026-09-15~abc123" = a date entered by one visitor
     g = load_gsec(iso)
     g = g[~g["is_frb"]]
     best, rows = None, []
