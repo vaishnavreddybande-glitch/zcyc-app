@@ -1,0 +1,7 @@
+variant,n_input_bonds,MAE_le14y_bp,MAE_gt14y_bp,MAE_all_bp,max_abs_bp,max_abs_at_tenor
+"V1 Exact fit: spline on zero rate, natural ends",26,1.2058,8.3945,6.3817,24.0657,35.0
+V2 As V1 without the 3M T-bill,26,1.2637,8.3961,6.399,24.0647,35.0
+V3 Spline on -ln(discount factor),26,1.7991,8.6801,6.7534,25.8963,35.0
+V4 Not-a-knot end condition,26,1.2114,14.3253,10.6534,71.505,50.0
+V5 Own rule-based input selection,29,4.1394,4.9388,4.715,16.0558,1.5
+V6 Spline on instantaneous forward rate,26,2.9542,73.382,53.6622,293.6726,50.0

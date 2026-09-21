@@ -1,0 +1,6 @@
+discount_curve,normalisation_factor,principal_strip_price,first_coupon_strip_price,sum_of_pvs,note
+A  PRIMARY: our smoothed G-Sec ZCYC,0.97963,7.50609,96.45368,95.22563,Built only from input bonds and T-bills
+B  our exact-fit G-Sec ZCYC,0.98141,7.29091,96.62881,95.05303,Earlier curve: overshoots at the long end
+C  FBIL published G-Sec ZCYC,0.97947,7.49123,96.4393,95.2406,Comparison only (guidelines para 13 option)
+"D  FBIL SDL ZCYC to 14y, then our G-Sec curve + 14y spread",1.03637,6.81018,101.97137,90.01237,SDL curve ends at 14 years; sensitivity only
+"E  FBIL SDL ZCYC to 14y, then flat",0.98195,8.72641,96.61752,95.0002,Naive extension; sensitivity only

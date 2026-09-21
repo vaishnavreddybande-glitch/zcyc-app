@@ -1,0 +1,216 @@
+{
+  "settlement": "2026-09-15",
+  "n_gsec_fixed": 119,
+  "n_frb": 5,
+  "n_inputs": 26,
+  "n_inputs_traded": 19,
+  "n_inputs_proxy": 7,
+  "strips_val": {
+    "n": 1592,
+    "mae_paise": 1.0083605292552873,
+    "max_paise": 3.9029530898211817
+  },
+  "price_check": {
+    "mean_paise": 0.055225688922189986,
+    "max_paise": 0.4524792636999564
+  },
+  "par_formula_check": {
+    "mean_bp": 0.2708804388631987,
+    "max_bp": 0.8737048202451803
+  },
+  "exact": {
+    "converged": true,
+    "max_price_error": 1.4210854715202004e-13,
+    "d2_jump": 1.6620386400489906e-08,
+    "n_knots": 30
+  },
+  "variants": [
+    {
+      "variant": "V1 Exact fit: spline on zero rate, natural ends",
+      "n_input_bonds": 26,
+      "MAE_le14y_bp": 1.206,
+      "MAE_gt14y_bp": 8.395,
+      "MAE_all_bp": 6.382,
+      "max_abs_bp": 24.066,
+      "max_abs_at_tenor": 35.0
+    },
+    {
+      "variant": "V2 As V1 without the 3M T-bill",
+      "n_input_bonds": 26,
+      "MAE_le14y_bp": 1.264,
+      "MAE_gt14y_bp": 8.396,
+      "MAE_all_bp": 6.399,
+      "max_abs_bp": 24.065,
+      "max_abs_at_tenor": 35.0
+    },
+    {
+      "variant": "V3 Spline on -ln(discount factor)",
+      "n_input_bonds": 26,
+      "MAE_le14y_bp": 1.799,
+      "MAE_gt14y_bp": 8.68,
+      "MAE_all_bp": 6.753,
+      "max_abs_bp": 25.896,
+      "max_abs_at_tenor": 35.0
+    },
+    {
+      "variant": "V4 Not-a-knot end condition",
+      "n_input_bonds": 26,
+      "MAE_le14y_bp": 1.211,
+      "MAE_gt14y_bp": 14.325,
+      "MAE_all_bp": 10.653,
+      "max_abs_bp": 71.505,
+      "max_abs_at_tenor": 50.0
+    },
+    {
+      "variant": "V5 Own rule-based input selection",
+      "n_input_bonds": 29,
+      "MAE_le14y_bp": 4.139,
+      "MAE_gt14y_bp": 4.939,
+      "MAE_all_bp": 4.715,
+      "max_abs_bp": 16.056,
+      "max_abs_at_tenor": 1.5
+    },
+    {
+      "variant": "V6 Spline on instantaneous forward rate",
+      "n_input_bonds": 26,
+      "MAE_le14y_bp": 2.954,
+      "MAE_gt14y_bp": 73.382,
+      "MAE_all_bp": 53.662,
+      "max_abs_bp": 293.673,
+      "max_abs_at_tenor": 50.0
+    }
+  ],
+  "segments": [
+    {
+      "segment_years": "0-1",
+      "n_tenors": 4,
+      "exact_MAE_bp": 0.02,
+      "smooth_MAE_bp": 0.01,
+      "smooth_mean_bp": 0.01,
+      "smooth_max_abs_bp": 0.05,
+      "exact_par_MAE_bp": 0.24,
+      "smooth_par_MAE_bp": 0.27
+    },
+    {
+      "segment_years": "1-3",
+      "n_tenors": 8,
+      "exact_MAE_bp": 0.63,
+      "smooth_MAE_bp": 2.67,
+      "smooth_mean_bp": -2.47,
+      "smooth_max_abs_bp": 5.19,
+      "exact_par_MAE_bp": 0.4,
+      "smooth_par_MAE_bp": 2.83
+    },
+    {
+      "segment_years": "3-5",
+      "n_tenors": 8,
+      "exact_MAE_bp": 0.87,
+      "smooth_MAE_bp": 1.82,
+      "smooth_mean_bp": 1.28,
+      "smooth_max_abs_bp": 3.8,
+      "exact_par_MAE_bp": 0.65,
+      "smooth_par_MAE_bp": 1.65
+    },
+    {
+      "segment_years": "5-10",
+      "n_tenors": 20,
+      "exact_MAE_bp": 0.58,
+      "smooth_MAE_bp": 1.7,
+      "smooth_mean_bp": -0.02,
+      "smooth_max_abs_bp": 3.47,
+      "exact_par_MAE_bp": 0.46,
+      "smooth_par_MAE_bp": 1.35
+    },
+    {
+      "segment_years": "10-14",
+      "n_tenors": 16,
+      "exact_MAE_bp": 2.75,
+      "smooth_MAE_bp": 2.67,
+      "smooth_mean_bp": 2.01,
+      "smooth_max_abs_bp": 4.49,
+      "exact_par_MAE_bp": 1.72,
+      "smooth_par_MAE_bp": 1.73
+    },
+    {
+      "segment_years": "14-20",
+      "n_tenors": 24,
+      "exact_MAE_bp": 5.67,
+      "smooth_MAE_bp": 1.77,
+      "smooth_mean_bp": -1.34,
+      "smooth_max_abs_bp": 3.25,
+      "exact_par_MAE_bp": 2.82,
+      "smooth_par_MAE_bp": 0.8
+    },
+    {
+      "segment_years": "20-30",
+      "n_tenors": 40,
+      "exact_MAE_bp": 4.01,
+      "smooth_MAE_bp": 2.17,
+      "smooth_mean_bp": 0.93,
+      "smooth_max_abs_bp": 4.1,
+      "exact_par_MAE_bp": 1.3,
+      "smooth_par_MAE_bp": 0.79
+    },
+    {
+      "segment_years": "30-40",
+      "n_tenors": 40,
+      "exact_MAE_bp": 13.09,
+      "smooth_MAE_bp": 1.12,
+      "smooth_mean_bp": -0.96,
+      "smooth_max_abs_bp": 1.93,
+      "exact_par_MAE_bp": 2.06,
+      "smooth_par_MAE_bp": 0.24
+    },
+    {
+      "segment_years": "40-50",
+      "n_tenors": 40,
+      "exact_MAE_bp": 9.71,
+      "smooth_MAE_bp": 1.59,
+      "smooth_mean_bp": 0.61,
+      "smooth_max_abs_bp": 2.88,
+      "exact_par_MAE_bp": 0.6,
+      "smooth_par_MAE_bp": 0.29
+    }
+  ],
+  "exact_vs_fbil": {
+    "mae": 6.3816550444125255,
+    "mae_le10": 0.5890053352228763,
+    "mae_le14": 1.2057617075656555,
+    "mae_gt14": 8.394502453186309,
+    "max": 24.065713932565558,
+    "max_at": 35.0,
+    "within_2bp_pct": 32.0
+  },
+  "smooth_vs_fbil": {
+    "mae": 1.749314874734705,
+    "mae_le10": 1.7475937321238444,
+    "mae_le14": 2.010122077482341,
+    "mae_gt14": 1.647889851443958,
+    "max": 5.1886094152425954,
+    "max_at": 2.5,
+    "within_2bp_pct": 66.5
+  },
+  "smooth_price_err_paise": 11.166926240981102,
+  "smooth_d2_jump": 1.6438949757002774e-08,
+  "exact_gap_at_input_maturities_gt14_bp": 5.935232723091088,
+  "fbil_repricing": {
+    "mean_paise": 7.508775850954718,
+    "gt14_paise": 13.011176362263512,
+    "traded_paise": 9.190064699731394,
+    "proxy_paise": 2.9452775471323127
+  },
+  "gaps_beyond_14": [
+    3.9,
+    7.2,
+    7.6,
+    9.7
+  ],
+  "n_inputs_le14": 16,
+  "n_inputs_gt14": 10,
+  "first_input_years": 2.5900068446269677,
+  "last_input_years": 49.34428473648186,
+  "widest_gap": [
+    39.671457905544145,
+    49.34428473648186
+  ]
+}

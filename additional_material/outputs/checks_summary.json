@@ -1,0 +1,45 @@
+{
+  "tuning": {
+    "lam": 0.005,
+    "slope": 0.5,
+    "august_mean_bp": 2.8319680408885946,
+    "test_bp_at_choice": 1.749314874734705,
+    "test_bp_best_in_grid": 1.426022566771332,
+    "n_grid": 36,
+    "n_within_0.25bp_of_best": 9,
+    "august_range_near_best": [
+      2.8319680408885946,
+      3.0218309949380107
+    ],
+    "test_range_near_best": [
+      1.5066395763824358,
+      2.838647850530383
+    ]
+  },
+  "rounding_control": {
+    "exact_fit_paise": 6.449541755360909e-12,
+    "exact_fit_rounded_to_fbil_grid_paise": 0.8897037113194655,
+    "fbil_published_paise": 7.510904401286266
+  },
+  "daycount_mean_paise": {
+    "act/365.25": 1.012834337097191,
+    "act/365": 2.0802627836955208,
+    "act/360": 42.62139237188934,
+    "30/360": 0.8508925164902506
+  },
+  "tbill_le14_bp": {
+    "direct": 1.145720049193557,
+    "bond_equivalent": 1.7017097915634765
+  },
+  "loo": {
+    "n": 129,
+    "exact_mae_bp": 3.8980626050709946,
+    "smooth_mae_bp": 2.446364799951775,
+    "exact_le14": 4.155469925861023,
+    "smooth_le14": 2.500703200154205,
+    "exact_gt14": 3.5043808203333024,
+    "smooth_gt14": 2.3632590114068814,
+    "exact_median": 2.8870875459939604,
+    "smooth_median": 1.93097752657998
+  }
+}

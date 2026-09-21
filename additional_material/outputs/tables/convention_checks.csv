@@ -1,0 +1,6 @@
+check,result
+Clean prices at T+1 settlement (15-Sep-2026),"mean |error| 0.06 paise, max 0.45 (settling on 11-Sep instead: mean 0.45 paise)"
+FBIL ZCYC equals the T-bill rate at 0.25 / 0.5 / 1.0 years,3M 5.18 vs 5.18; 6M 5.59 vs 5.59; 12M 5.89 vs 5.89
+Par formula (pro-rated stub coupon) applied to FBIL's ZCYC reproduces FBIL's par sheet,"mean |diff| 0.27 bp, max 0.87 bp over 200 tenors"
+SDL ZCYC front end = T-bill + spread (SDL methodology 5.2),6M spread 0.23 (also on 3M: 5.18+spread=5.41); 12M spread 0.31
+FBIL STRIP prices = 100 x DF from FBIL's ZCYC (act/365.25 from 15-Sep),"1592 STRIPS of 6M+: mean |error| 1.01 paise, max 3.90 paise"
